@@ -1,0 +1,25 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "bf77e654-0401-4645-bc9a-6a0df9854e22++7100",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "bf77e654-0401-4645-bc9a-6a0df9854e22++7100" : {
+
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "bf77e654-0401-4645-bc9a-6a0df9854e22++7100" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "C4B99E9F-9A47-42AD-9E42-48ACBC58E1BF",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "bf77e654-0401-4645-bc9a-6a0df9854e22++7100" : "mofei"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Mofei",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Mofei.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "svn:\/\/192.168.0.227\/app",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "bf77e654-0401-4645-bc9a-6a0df9854e22++7100"
+    }
+  ]
+}

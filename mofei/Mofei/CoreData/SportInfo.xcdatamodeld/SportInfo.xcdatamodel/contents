@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="6252" systemVersion="14B25" minimumToolsVersion="Xcode 4.3" macOSVersion="Automatic" iOSVersion="Automatic">
+    <entity name="HeartRateEntity" representedClassName="HeartRateEntity" syncable="YES">
+        <attribute name="heartRateValue" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <attribute name="syncFlag" optional="YES" attributeType="Boolean" defaultValueString="0" syncable="YES"/>
+        <attribute name="timeStamp" optional="YES" attributeType="Integer 64" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="userID" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="MensesInfoEntity" representedClassName="MensesInfoEntity" syncable="YES">
+        <attribute name="endTimeStamp" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="modifiedFlag" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="syncFlag" optional="YES" attributeType="Boolean" defaultValueString="0" syncable="YES"/>
+        <attribute name="timeStamp" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="userID" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="WalkStepEntity" representedClassName="WalkStepEntity" syncable="YES">
+        <attribute name="calorie" optional="YES" attributeType="Float" defaultValueString="0" syncable="YES"/>
+        <attribute name="distance" optional="YES" attributeType="Float" defaultValueString="0" syncable="YES"/>
+        <attribute name="endTimeStamp" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="syncFlag" optional="YES" attributeType="Boolean" defaultValueString="0" syncable="YES"/>
+        <attribute name="timeStamp" optional="YES" attributeType="Integer 64" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="userID" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="walkStepCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="HeartRateEntity" positionX="-54" positionY="-9" width="128" height="105"/>
+        <element name="MensesInfoEntity" positionX="63" positionY="27" width="128" height="118"/>
+        <element name="WalkStepEntity" positionX="180" positionY="-7" width="128" height="148"/>
+    </elements>
+</model>

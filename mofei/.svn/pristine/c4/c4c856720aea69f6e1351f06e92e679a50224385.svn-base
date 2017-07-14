@@ -1,0 +1,38 @@
+//
+//  CBPeripheral+UUIDString.m
+//  Mofei
+//
+//  Created by macMini_Dev on 14-9-26.
+//  Copyright (c) 2014年 Young. All rights reserved.
+//
+
+#import "CBPeripheral+UUIDString.h"
+
+@implementation CBPeripheral (UUIDString)
+
+- (NSString *)UUIDString
+{
+    NSString *uuidString = @"NULL";
+    if([self respondsToSelector:@selector(identifier)])
+    //if([UIDevice currentDevice].systemVersion.floatValue >= 7.0)
+    {
+        uuidString = self.identifier.UUIDString;
+    }
+    else if(self.UUID)
+    {
+        uuidString = [NSString stringWithUTF8String:CFStringGetCStringPtr(CFUUIDCreateString(NULL, self.UUID), 0)];
+    }
+    return uuidString;
+}
+
+- (BOOL)isEqual:(CBPeripheral *)peripheral
+{
+    return [self.UUIDString isEqualToString:peripheral.UUIDString];
+}
+
+- (BOOL)isEqualToPeripheral:(CBPeripheral *)peripheral
+{
+    return [self.UUIDString isEqualToString:peripheral.UUIDString];
+}
+
+@end

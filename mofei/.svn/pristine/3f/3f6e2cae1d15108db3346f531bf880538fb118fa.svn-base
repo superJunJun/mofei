@@ -1,0 +1,16 @@
+//
+//  CBPeripheral+UUIDString.h
+//  Mofei
+//
+//  Created by macMini_Dev on 14-9-26.
+//  Copyright (c) 2014年 Young. All rights reserved.
+//
+
+#import <CoreBluetooth/CoreBluetooth.h>
+
+@interface CBPeripheral (UUIDString)
+
+- (NSString *)UUIDString;
+- (BOOL)isEqualToPeripheral:(CBPeripheral *)peripheral;
+
+@end

@@ -1,0 +1,521 @@
+//
+//  TYDStartPageViewController.m
+//  Mofei
+//
+//  Created by macMini_Dev on 14-9-1.
+//  Copyright (c) 2014年 Young. All rights reserved.
+//
+//  起始页
+//
+
+#import "TYDStartPageViewController.h"
+#import "TYDLoginViewController.h"
+#import "TYDSearchDeviceViewController.h"
+#import "TYDDeviceManageViewController.h"
+#import "TYDWelcomeViewController.h"
+#import "TYDUserInfoSettingViewController.h"
+
+#import "TYDBLEDeviceManager.h"
+#import "BOAvatarView.h"
+
+#define sDetailPageSegue            @"detailPageSegue"
+#define sFirstTimeLaunchedMarkKey   @"firstTimeLaunchedMark"
+#define sChangeDeviceInquire        @"设备已连接,是否更换设备?"
+
+@interface TYDStartPageViewController () <UIScrollViewDelegate, TYDBLEDeviceManagerBatteryDelegate, TYDWelcomeViewControllerDelegate,UIAlertViewDelegate>
+
+@property (strong, nonatomic) UIView *topInfoBar;
+@property (strong, nonatomic) UIView *bottomFuncPad;
+
+@property (strong, nonatomic) UIView *userInfoPad;
+@property (strong, nonatomic) BOAvatarView *avatarView;
+@property (strong, nonatomic) UILabel *usernameLabel;
+@property (strong, nonatomic) UIButton *loginButton;
+
+@property (strong, nonatomic) UIButton *bindButton;
+@property (strong, nonatomic) UIButton *batteryButton;
+
+@property (nonatomic) BOOL didDeviceConnected;
+@property (nonatomic) BOOL didUserLogin;
+@property (strong, nonatomic) NSMutableArray *funcButtons;
+@property (strong, nonatomic) TYDBLEDeviceManager *deviceManager;
+
+@end
+
+@implementation TYDStartPageViewController
+{
+    //BOOL _isFirstTimeToLaunch;
+    BOOL _isWelcomePageVisible;
+    BOOL _isUserBasicInfoSetted;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    [self localDataInitialize];
+    [self navigationBarItemsLoad];
+    [self subviewsLoad];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [self.navigationController setNavigationBarHidden:YES animated:YES];
+    
+    self.navigationBarTintColor = [UIColor colorWithHex:0xe23674];
+    self.deviceManager.batteryDelegate = self;
+    [self infoStatusCheck];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    self.deviceManager.batteryDelegate = nil;
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    if(!_isWelcomePageVisible && !_isUserBasicInfoSetted)
+    {
+        [self momentaryShowProgressHUDWithLabelText:nil additionalTarget:self action:@selector(userBasicInfoAdditionalAction) object:nil];
+    }
+}
+
+- (void)localDataInitialize
+{
+    self.deviceManager = [TYDBLEDeviceManager sharedBLEDeviceManager];
+    [self launchTimeInfoCheck];
+    [self userBasicInfoStatusCheck];
+}
+
+- (void)launchTimeInfoCheck
+{
+    NSString *markKey = sFirstTimeLaunchedMarkKey;
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    BOOL isFirstTimeToLaunch = ![userDefaults boolForKey:markKey];
+    //isFirstTimeToLaunch = YES;//Test
+    if(isFirstTimeToLaunch)
+    {
+        [userDefaults setBool:YES forKey:markKey];
+        [userDefaults synchronize];
+    }
+    _isWelcomePageVisible = isFirstTimeToLaunch;
+}
+
+- (void)userBasicInfoStatusCheck
+{
+    NSString *markKey = sUserBasicInfoSettedMarkKey;
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    _isUserBasicInfoSetted = [userDefaults boolForKey:markKey];
+    //_isUserBasicInfoSetted = NO;//Test
+}
+
+- (void)userBasicInfoAdditionalAction
+{
+    if(!_isWelcomePageVisible && !_isUserBasicInfoSetted)
+    {
+        _isUserBasicInfoSetted = YES;
+        
+        if(![TYDUserInfo sharedUserInfo].isUserAccountEnable)
+        {
+            TYDUserInfoSettingViewController *vc = [TYDUserInfoSettingViewController new];
+            [self.navigationController pushViewController:vc animated:YES];
+            [self.navigationController setNavigationBarHidden:NO animated:YES];
+        }
+        else
+        {
+            NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+            NSString *markKey = sUserBasicInfoSettedMarkKey;
+            [userDefaults setBool:YES forKey:markKey];
+            [userDefaults synchronize];
+        }
+    }
+}
+
+- (void)navigationBarItemsLoad
+{
+    self.navigationController.navigationBarHidden = YES;
+}
+
+- (void)subviewsLoad
+{
+    [self basicViewsLoad];
+    [self bottomFuncPadLoad];
+    [self userInfoBarLoad];
+    [self deviceInfoBarLoad];
+    if(_isWelcomePageVisible)
+    {
+        [self welcomePageViewsLoad];
+    }
+}
+
+- (void)basicViewsLoad
+{
+    UIView *baseView = self.view;
+    baseView.backgroundColor = [UIColor colorWithHex:0xe23674];
+    
+    CGFloat iosVersionNumber = [[UIDevice currentDevice] systemVersion].floatValue;
+    CGRect frame = CGRectMake(0, 0, baseView.width, 44);
+    if(iosVersionNumber >= 7.0)
+    {//IOS7.0之后，navigationBar与statusBar一体
+        frame.origin.y = 10;
+    }
+    UIView *topInfoBar = [[UIView alloc] initWithFrame:frame];
+    topInfoBar.backgroundColor = [UIColor clearColor];
+    [baseView addSubview:topInfoBar];
+    
+    //比例(3/7),不用固定值230
+    frame.size.height = (baseView.height - topInfoBar.bottom) * 0.43;
+    UIView *bottomFuncPad = [[UIView alloc] initWithFrame:frame];
+    bottomFuncPad.backgroundColor = [UIColor colorWithHex:0xfcfcff];
+    bottomFuncPad.bottom = baseView.height;
+    [baseView addSubview:bottomFuncPad];
+    
+    UIImageView *braImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"startPage_bra"]];
+    braImageView.center = baseView.innerCenter;
+    braImageView.top = (bottomFuncPad.top - topInfoBar.bottom - braImageView.height) * 0.4 + topInfoBar.bottom;
+    [baseView addSubview:braImageView];
+    
+    self.topInfoBar = topInfoBar;
+    self.bottomFuncPad = bottomFuncPad;
+}
+
+- (void)userInfoBarLoad
+{
+    UIView *baseView = self.topInfoBar;
+    CGRect frame = baseView.bounds;
+    UIView *userInfoPad = [[UIView alloc] initWithFrame:frame];
+    userInfoPad.backgroundColor = [UIColor clearColor];
+    [baseView addSubview:userInfoPad];
+    
+    BOAvatarView *avatarView = [[BOAvatarView alloc] initWithAvatarRadius:15];
+    avatarView.shadowEnable = NO;
+    avatarView.center = userInfoPad.innerCenter;
+    avatarView.left = 8;
+    [userInfoPad addSubview:avatarView];
+    
+    UIFont *font = [UIFont fontWithName:@"Arial" size:13];
+    UIColor *whiteColor = [UIColor colorWithHex:0xffffff];
+    UIColor *grayColor = [UIColor colorWithHex:0x8f8f8f];
+    UILabel *usernameLabel = [UILabel new];
+    usernameLabel.backgroundColor = [UIColor clearColor];
+    usernameLabel.font = font;
+    usernameLabel.textColor = whiteColor;
+    usernameLabel.text = @" ";
+    [usernameLabel sizeToFit];
+    usernameLabel.center = avatarView.center;
+    usernameLabel.left = avatarView.right + 4;
+    [userInfoPad addSubview:usernameLabel];
+    
+    //loginButton
+    UIImage *avatarImage = [UIImage imageNamed:@"startPage_defaultAvatarBtn"];
+    UIImage *avatarImageH = [UIImage imageNamed:@"startPage_defaultAvatarBtnH"];
+    NSString *loginText = @"请登录";
+    CGSize loginTextSize = [BOAssistor string:loginText sizeWithFont:font];
+    
+    frame.size.width = avatarImage.size.width + loginTextSize.width + 8 * 2;
+    UIButton *loginButton = [[UIButton alloc] initWithFrame:frame];
+    loginButton.backgroundColor = [UIColor clearColor];
+    [loginButton setImage:avatarImage forState:UIControlStateNormal];
+    [loginButton setImage:avatarImageH forState:UIControlStateHighlighted];
+    [loginButton setTitle:loginText forState:UIControlStateNormal];
+    [loginButton setTitleColor:whiteColor forState:UIControlStateNormal];
+    [loginButton setTitleColor:grayColor forState:UIControlStateHighlighted];
+    loginButton.titleLabel.font = font;
+    loginButton.titleLabel.backgroundColor = [UIColor clearColor];
+    [loginButton addTarget:self action:@selector(loginButtonTap:) forControlEvents:UIControlEventTouchUpInside];
+    [baseView addSubview:loginButton];
+    
+    self.userInfoPad = userInfoPad;
+    self.avatarView = avatarView;
+    self.usernameLabel = usernameLabel;
+    self.loginButton = loginButton;
+}
+
+- (void)deviceInfoBarLoad
+{
+    UIView *baseView = self.topInfoBar;
+    
+    UIImage *deviceImage = [UIImage imageNamed:@"startPage_bindDevice"];
+    UIImage *deviceImageH = [UIImage imageNamed:@"startPage_bindDeviceH"];
+    UIImage *batteryImage = [UIImage imageNamed:@"startPage_batteryBtn"];
+    UIImage *batteryImageH = [UIImage imageNamed:@"startPage_batteryBtnH"];
+    UIFont *font = [UIFont fontWithName:@"Arial" size:13];
+    UIColor *whiteColor = [UIColor colorWithHex:0xffffff];
+    UIColor *grayColor = [UIColor colorWithHex:0x8f8f8f];
+    NSString *bindDeviceText = @"绑定设备";
+    NSString *batteryText = @"电量 100%";
+    
+    CGFloat offset = 8;
+    CGFloat iconWidth = deviceImage.size.width;
+    CGFloat bindDeviceTextWidth = [BOAssistor string:bindDeviceText sizeWithFont:font].width;
+    CGFloat batteryTextWidth = [BOAssistor string:batteryText sizeWithFont:font].width;
+    
+    CGRect frame = CGRectMake(0, 0, iconWidth + bindDeviceTextWidth + offset * 2, baseView.height);
+    UIButton *bindButton = [[UIButton alloc] initWithFrame:frame];
+    bindButton.backgroundColor = [UIColor clearColor];
+    [bindButton setImage:deviceImage forState:UIControlStateNormal];
+    [bindButton setImage:deviceImageH forState:UIControlStateHighlighted];
+    [bindButton setTitle:bindDeviceText forState:UIControlStateNormal];
+    [bindButton setTitleColor:whiteColor forState:UIControlStateNormal];
+    [bindButton setTitleColor:grayColor forState:UIControlStateHighlighted];
+    bindButton.titleLabel.font = font;
+    bindButton.titleLabel.backgroundColor = [UIColor clearColor];
+    [bindButton addTarget:self action:@selector(deviceInfoBarTap:) forControlEvents:UIControlEventTouchUpInside];
+    bindButton.right = baseView.width;
+    [baseView addSubview:bindButton];
+    
+    frame.size.width = iconWidth + batteryTextWidth + offset * 2;
+    UIButton *batteryButton = [[UIButton alloc] initWithFrame:frame];
+    batteryButton.backgroundColor = [UIColor clearColor];
+    [batteryButton setImage:batteryImage forState:UIControlStateNormal];
+    [batteryButton setImage:batteryImageH forState:UIControlStateHighlighted];
+    [batteryButton setTitle:@"电量 0%" forState:UIControlStateNormal];
+    [batteryButton setTitleColor:whiteColor forState:UIControlStateNormal];
+    [batteryButton setTitleColor:grayColor forState:UIControlStateHighlighted];
+    batteryButton.titleLabel.font = font;
+    batteryButton.titleLabel.backgroundColor = [UIColor clearColor];
+    batteryButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    batteryButton.titleEdgeInsets = UIEdgeInsetsMake(0, -offset, 0, 0);
+    batteryButton.imageEdgeInsets = UIEdgeInsetsMake(0, -offset, 0, 0);
+    [batteryButton addTarget:self action:@selector(deviceInfoBarTap:) forControlEvents:UIControlEventTouchUpInside];
+    batteryButton.right = baseView.width - 4;
+    [baseView addSubview:batteryButton];
+    
+    self.bindButton = bindButton;
+    self.batteryButton = batteryButton;
+}
+
+- (void)bottomFuncPadLoad
+{
+    UIView *baseView = self.bottomFuncPad;
+    NSArray *funcBtnImage = @[@"startPage_sportBtn", @"startPage_bestieBtn", @"startPage_breastBtn", @"startPage_meBtn"];
+    NSArray *funcBtnImageH = @[@"startPage_sportBtnH", @"startPage_bestieBtnH", @"startPage_breastBtnH", @"startPage_meBtnH"];
+    NSArray *funcTitles = @[@"运动", @"专属日历", @"美胸达人", @"我的"];
+    UIColor *grayColor = [UIColor colorWithHex:0x8f8f8f];
+    UIColor *pinkColor = [UIColor colorWithHex:0xe23674];
+    UIFont *titleFont = [UIFont fontWithName:@"Arial" size:13];
+    CGSize itemSize = CGSizeMake(baseView.width * 0.5, baseView.height * 0.5);
+    
+    NSMutableArray *funcItems = [NSMutableArray new];
+    for(int i = 0; i < funcTitles.count; i++)
+    {
+        UIButton *item = [self funcItemCreateWithImageName:funcBtnImage[i] highlightedImageName:funcBtnImageH[i] title:funcTitles[i] titleFont:titleFont titleNormalColor:grayColor titleHighlightedColor:pinkColor givenSize:itemSize];
+        [item addTarget:self action:@selector(funcButtonTap:) forControlEvents:UIControlEventTouchUpInside];
+        [baseView addSubview:item];
+        [funcItems addObject:item];
+    }
+    self.funcButtons = funcItems;
+    
+    UIButton *sportButton = (UIButton *)funcItems[0];
+    UIButton *bestieButton = (UIButton *)funcItems[1];
+    UIButton *breastButton = (UIButton *)funcItems[2];
+    UIButton *meButton = (UIButton *)funcItems[3];
+    sportButton.origin = CGPointZero;
+    bestieButton.origin = sportButton.bottomLeft;
+    breastButton.origin = sportButton.bottomRight;
+    meButton.origin = sportButton.topRight;
+}
+
+//同时存在图片和标签时，默认为两者横向并列（图片居左标签居右），中心对其
+- (UIButton *)funcItemCreateWithImageName:(NSString *)imageName
+                     highlightedImageName:(NSString *)highlightedImageName
+                                    title:(NSString *)title
+                                titleFont:(UIFont *)titleFont
+                         titleNormalColor:(UIColor *)titleNormalColor
+                    titleHighlightedColor:(UIColor *)titleHighlightedColor
+                                givenSize:(CGSize)givenSize
+{
+    UIImage *image = [UIImage imageNamed:imageName];
+    UIImage *imageH = [UIImage imageNamed:highlightedImageName];
+    CGSize titleSize = [BOAssistor string:title sizeWithFont:titleFont];
+    CGSize imageSize = CGSizeMake(MAX(image.size.width, imageH.size.width), MAX(image.size.height, imageH.size.height));
+    CGFloat innerInterval = 4;
+    CGFloat verOffset = (givenSize.height - imageSize.height - titleSize.height - innerInterval) * 0.5;
+    
+    UIButton *button = [UIButton new];
+    button.backgroundColor = [UIColor clearColor];
+    button.size = givenSize;
+    
+    [button setImage:image forState:UIControlStateNormal];
+    [button setImage:imageH forState:UIControlStateHighlighted];
+    [button setTitle:title forState:UIControlStateNormal];
+    [button setTitleColor:titleNormalColor forState:UIControlStateNormal];
+    [button setTitleColor:titleHighlightedColor forState:UIControlStateHighlighted];
+    button.titleLabel.font = titleFont;
+    button.titleLabel.backgroundColor = [UIColor clearColor];
+    button.contentVerticalAlignment = UIControlContentVerticalAlignmentTop;
+    
+    button.imageEdgeInsets = UIEdgeInsetsMake(verOffset, titleSize.width, 0, 0);
+    button.titleEdgeInsets = UIEdgeInsetsMake(givenSize.height - verOffset - titleSize.height, -imageSize.width, 0, 0);
+    
+    return button;
+}
+
+- (void)welcomePageViewsLoad
+{
+    UIView *baseView = self.view;
+    
+    TYDWelcomeViewController *welcomeVC = [TYDWelcomeViewController new];
+    welcomeVC.delegate = self;
+    [self addChildViewController:welcomeVC];
+    
+    UIView *welcomeView = welcomeVC.view;
+    welcomeView.frame = baseView.bounds;
+    [baseView addSubview:welcomeView];
+    
+    //self.welcomePageView = welcomeView;
+}
+
+#pragma mark - InfoCheck
+
+- (void)infoStatusCheck
+{
+    [self.deviceManager readBatteryLevel];
+    
+    self.didUserLogin = [TYDUserInfo sharedUserInfo].isUserAccountEnable;
+    self.didDeviceConnected = (self.deviceManager.activePeripheral != NULL);
+}
+
+- (void)setDidDeviceConnected:(BOOL)didDeviceConnected
+{
+    _didDeviceConnected = didDeviceConnected;
+    if(didDeviceConnected)
+    {
+        self.bindButton.hidden = YES;
+        self.batteryButton.hidden = NO;
+    }
+    else
+    {
+        self.bindButton.hidden = NO;
+        self.batteryButton.hidden = YES;
+    }
+}
+
+- (void)setDidUserLogin:(BOOL)didUserLogin
+{
+    _didUserLogin = didUserLogin;
+    if(didUserLogin)
+    {
+        self.loginButton.hidden = YES;
+        self.userInfoPad.hidden = NO;
+        TYDUserInfo *userInfo = [TYDUserInfo sharedUserInfo];
+        [self.avatarView setAvatarImageWithAvatarID:userInfo.avatarID];
+        self.usernameLabel.text = userInfo.username.length > 0 ? userInfo.username : sUserNameDefault;
+        [self.usernameLabel sizeToFit];
+    }
+    else
+    {
+        self.userInfoPad.hidden = YES;
+        self.loginButton.hidden = NO;
+    }
+}
+
+#pragma mark - TouchEvent
+
+- (void)funcButtonTap:(UIButton *)sender
+{
+    NSLog(@"funcButtonTap");
+    [self performSegueWithIdentifier:sDetailPageSegue sender:sender];
+}
+
+- (void)loginButtonTap:(UIButton *)sender
+{
+    NSLog(@"loginButtonTap");
+    TYDLoginViewController *vc = [TYDLoginViewController new];
+    [self.navigationController pushViewController:vc animated:YES];
+    [self.navigationController setNavigationBarHidden:NO animated:YES];
+}
+
+- (void)deviceInfoBarTap:(UIButton *)sender
+{
+    NSLog(@"deviceInfoBarTap");
+
+//    [self.navigationController setNavigationBarHidden:NO animated:YES];
+    if(!_didDeviceConnected)
+    {
+        TYDSearchDeviceViewController *vc = [TYDSearchDeviceViewController new];
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else
+    {
+        UIAlertView * alertView = [[UIAlertView alloc]initWithTitle:@"提示:" message:sChangeDeviceInquire delegate:self cancelButtonTitle:@"取消" otherButtonTitles:@"确定", nil];
+        [alertView show];
+    }
+}
+
+#pragma mark - UIAlertView Delegate
+
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if(buttonIndex == alertView.firstOtherButtonIndex)
+    {
+        if([alertView.message isEqualToString:sChangeDeviceInquire])
+        {
+            TYDDeviceManageViewController *vc = [TYDDeviceManageViewController new];
+            [[TYDBLEDeviceManager sharedBLEDeviceManager] disconnectActivePeripheral];
+            [self.navigationController pushViewController:vc animated:YES];
+            [self.navigationController setNavigationBarHidden:NO animated:YES];
+        }
+    }
+}
+
+#pragma mark - Navigation
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if([segue.identifier isEqualToString:sDetailPageSegue])
+    {
+        NSUInteger index = 0;
+        if([self.funcButtons containsObject:sender])
+        {
+            index = [self.funcButtons indexOfObject:sender];
+        }
+        UITabBarController *tabBarController = segue.destinationViewController;
+        tabBarController.selectedIndex = index;
+    }
+}
+
+#pragma mark - TYDWelcomeViewController Delegate
+
+- (void)welcomeViewControllerLoginButtonTap:(TYDWelcomeViewController *)welcomeVC
+{
+    TYDLoginViewController *vc = [TYDLoginViewController new];
+    [self.navigationController pushViewController:vc animated:YES];
+    [self.navigationController setNavigationBarHidden:NO animated:YES];
+    [welcomeVC destroyAnimated:YES];
+    _isWelcomePageVisible = NO;
+}
+
+- (void)welcomeViewControllerDelayLoginButtonTap:(TYDWelcomeViewController *)welcomeVC
+{
+    [welcomeVC destroyAnimated:YES];
+    _isWelcomePageVisible = NO;
+    [self momentaryShowProgressHUDWithLabelText:nil additionalTarget:self action:@selector(userBasicInfoAdditionalAction) object:nil];
+}
+
+#pragma mark - TYDBLEDeviceManagerBatteryDelegate
+
+- (void)deviceBatteryLevelUpdated:(CGFloat)batteryLevel
+{
+    int value = MIN(100, (uint)batteryLevel);
+    NSString *batteryText = [NSString stringWithFormat:@"电量 %d%%", value];
+    [self.batteryButton setTitle:batteryText forState:UIControlStateNormal];
+}
+
+#pragma mark - TYDSuspendEventDelegate
+
+//- (void)applicationWillEnterForeground
+//{
+//    
+//}
+
+- (void)applicationDidBecomeActive
+{
+    [self infoStatusCheck];
+}
+
+@end

@@ -1,0 +1,69 @@
+//
+//  TYDBLECBKeyfob.h
+//  Mofei
+//
+//  Created by macMini_Dev on 14-9-11.
+//  Copyright (c) 2014年 Young. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import <CoreBluetooth/CoreBluetooth.h>
+#import "CBPeripheral+UUIDString.h"
+
+#define sGivenPeripheralName                    @"Venus"
+#define nScanBLEPeripheralsTimerInterval        (1 * 60)//1 minute
+#define nLocalTimeStampBenchMark                1262275200//2010.1.1
+
+@protocol TYDBLECBKeyfobDelegate <NSObject>
+@optional
+- (void)centralManagerStateDidUpdate:(CBCentralManager *)central;
+- (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral;
+- (void)centralManager:(CBCentralManager *)central connectPeripheral:(CBPeripheral *)peripheral succeed:(BOOL)succeed;
+- (void)centralManager:(CBCentralManager *)central disConnectPeripheral:(CBPeripheral *)peripheral;
+- (void)peripheral:(CBPeripheral *)peripheral didDiscoverServicesSucceed:(BOOL)succeed;
+- (void)peripheralDiscoverCharacteristicsFailed:(CBPeripheral *)peripheral ;
+- (void)peripheralKeyfobReady:(CBPeripheral *)peripheral;
+
+//@required
+- (void)accelerometerValuesUpdatedX:(char)x y:(char)y z:(char)z;
+- (void)heartRateDataUpdated:(char *)hrData;
+- (void)TXPowerLevelUpdated:(char)TXPwr;
+- (void)batteryLevelUpdated:(CGFloat)batteryLevel;
+- (void)stepDataUpdated:(char *)stepData;
+- (void)peripheralSystemTimeRead:(NSUInteger)time;
+- (void)peripheralRemindAlertInfoRead:(NSUInteger)startTime endTime:(NSUInteger)endTime alertInterval:(NSUInteger)alertInterval;
+
+@end
+
+@interface TYDBLECBKeyfob : NSObject
+
+@property (strong, nonatomic, readonly) CBCentralManager *centralManager;
+@property (assign, nonatomic) id<TYDBLECBKeyfobDelegate> delegate;
+
+- (void)scanBLEPeripherals;
+- (void)stopScanBLEPeripherals;
+- (void)connectPeripheral:(CBPeripheral *)peripheral;
+- (void)disconnectPeripheral:(CBPeripheral *)peripheral;
+//- (void)disconnectActivePeripheral;
+
+- (void)soundBuzzer:(CBPeripheral *)p;
+- (void)readBattery:(CBPeripheral *)p;
+- (void)enableBatteryNotification:(CBPeripheral *)p;
+- (void)disableBatteryNotification:(CBPeripheral *)p;
+- (void)enableAccelerometer:(CBPeripheral *)p;
+- (void)disableAccelerometer:(CBPeripheral *)p;
+- (void)enableHeartRate:(CBPeripheral *)p;
+- (void)disableHeartRate:(CBPeripheral *)p;
+- (void)enableTXPower:(CBPeripheral *)p;
+- (void)disableTXPower:(CBPeripheral *)p;
+
+- (void)peripheral:(CBPeripheral *)peripheral synchronousTime:(NSUInteger)time;
+- (void)readPeripheralTime:(CBPeripheral *)peripheral;
+- (void)enableStepMeasure:(CBPeripheral *)peripheral;
+- (void)disableStepMeasure:(CBPeripheral *)peripheral;
+
+- (void)readRemindAlertInfo:(CBPeripheral *)peripheral;
+- (void)enableRemindAlert:(CBPeripheral *)peripheral startTime:(NSUInteger)startTime endTime:(NSUInteger)endTime alertInterval:(NSUInteger)alertInterval;
+- (void)disableRemindAlert:(CBPeripheral *)peripheral;
+
+@end
